@@ -25,7 +25,7 @@ def build_rag_graph(index_name: str):
     )
 
     retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
-    llm = ChatOpenAI(model="stealth/space-bunny-alpha", temperature=0,base_url='https://openrouter.ai/api/v1')
+    llm = ChatOpenAI(model="stealth/space-bunny-alpha", temperature=0.4, base_url='https://openrouter.ai/api/v1')
 
     # Define Nodes
     # def retrieve_node(state: AgentState):
