@@ -3,8 +3,11 @@ import os
 
 from langchain_huggingface import HuggingFaceEmbeddings
 from langgraph.graph import StateGraph, START, END 
-from langchain_openai import ChatOpenAI 
+# from langchain_openai import ChatOpenAI 
+from groq import Groq
 from langchain_pinecone import PineconeVectorStore
+
+client = Groq()
 
 class AgentState(TypedDict):
     question: str
@@ -25,7 +28,8 @@ def build_rag_graph(index_name: str):
     )
 
     retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
-    llm = ChatOpenAI(model="stealth/space-bunny-alpha", temperature=0.4, base_url='https://openrouter.ai/api/v1')
+    # llm = ChatOpenAI(model="stealth/space-bunny-alpha", temperature=0.4, base_url='https://openrouter.ai/api/v1')
+    
 
     # Define Nodes
     # def retrieve_node(state: AgentState):
@@ -68,12 +72,17 @@ def build_rag_graph(index_name: str):
 
         Question: {state['question']}"""
 
-        response = llm.invoke(prompt)
+        response = client.chat.completions.create(
+            model="openai/gpt-oss-120b",
+            messages=[
+                {"role": "user", "content": prompt}
+            ],temperature=0.4,
+        )
 
         # Simple score heuristic based on retrieved context availability
         # confidence = 0.95 if len(state["context"]) > 0 else 0.0
 
-        return {"answer": response.content}
+        return {"answer": response.choices[0].message.content}
 
     # Build Graph
     workflow = StateGraph(AgentState)
