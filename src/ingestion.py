@@ -1,8 +1,9 @@
 from langchain_community.document_loaders import PyPDFLoader 
+from langchain_openai import OpenAIEmbeddings
 from langchain_text_splitters import RecursiveCharacterTextSplitter 
-# from langchain_openai import OpenAIEmbeddings 
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_pinecone import PineconeVectorStore
+# from langchain_openai import OpenAIEmbeddings 
+# from langchain_huggingface import HuggingFaceEmbeddings
 
 from src.config import PINECONE_INDEX_NAME
 
@@ -20,8 +21,12 @@ def run_ingestion(pdf_path: str, index_name: str):
     chunks = text_splitter.split_documents(documents)
     print(f"Split into {len(chunks)} chunks")
 
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    # embeddings = HuggingFaceEmbeddings(
+    #     model_name="sentence-transformers/all-MiniLM-L6-v2"
+    # )
+    embeddings = OpenAIEmbeddings(
+        model="openai/text-embedding-3-small",
+        base_url="https://openrouter.ai/api/v1",
     )
 
     vectorstore = PineconeVectorStore.from_documents(

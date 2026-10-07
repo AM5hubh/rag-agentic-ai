@@ -7,7 +7,7 @@ query = st.chat_input( "Ask something about the Agentic AI eBook" )
 
 if query: 
     response = requests.post( 
-        "http://127.0.0.1:8000/chat", 
+        "https://rag-agentic-ai-bni1.onrender.com/chat", 
         json={ "query": query }, 
         timeout=60, 
     ) 

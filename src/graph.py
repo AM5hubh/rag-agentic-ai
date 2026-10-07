@@ -1,9 +1,9 @@
 from typing import List, TypedDict
 import os
 
-from langchain_huggingface import HuggingFaceEmbeddings
+# from langchain_huggingface import HuggingFaceEmbeddings
 from langgraph.graph import StateGraph, START, END 
-# from langchain_openai import ChatOpenAI 
+from langchain_openai import OpenAIEmbeddings 
 from groq import Groq
 from langchain_pinecone import PineconeVectorStore
 
@@ -17,8 +17,12 @@ class AgentState(TypedDict):
 
 def build_rag_graph(index_name: str):
 
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    # embeddings = HuggingFaceEmbeddings(
+    #     model_name="sentence-transformers/all-MiniLM-L6-v2"
+    # )
+    embeddings = OpenAIEmbeddings(
+        model="openai/text-embedding-3-small",
+        base_url="https://openrouter.ai/api/v1",
     )
 
     vectorstore = PineconeVectorStore( 
