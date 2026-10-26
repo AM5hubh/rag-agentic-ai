@@ -9,7 +9,8 @@ st.set_page_config(
     layout="centered",
 )
 
-API_URL = "http://localhost:8000/chat"
+# API_URL = "http://localhost:8000/chat"
+API_URL = "https://rag-agentic-ai-bni1.onrender.com/chat"
 
 st.title("🤖 Agentic AI RAG Chatbot")
 st.caption("Ask questions about the Agentic AI eBook.")
