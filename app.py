@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 load_dotenv()
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from src.graph import build_rag_graph
@@ -14,7 +15,19 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 graph = None
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "")
 
+allowed_origins = [
+    origin.strip().rstrip("/")
+    for origin in allowed_origins_env.split(",")
+    if origin.strip()
+]
+
+if not allowed_origins:
+    logger.warning(
+        "ALLOWED_ORIGINS is not configured. "
+        "Cross-origin browser requests will not be permitted."
+    )
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -48,6 +61,14 @@ app = FastAPI(
     description="Document-grounded question answering using RAG.",
     version="1.1.0",
     lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
