@@ -13,9 +13,11 @@ def run_ingestion(pdf_path: str, index_name: str):
 
     print(f"Loaded {len(documents)} documents from {pdf_path}")
 
-    text_splitter = RecursiveCharacterTextSplitter(
+    text_splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+        encoding_name="cl100k_base",
         chunk_size=1000,
         chunk_overlap=200,
+        separators=["\n\n", "\n", ". ", " ", ""],
     )
 
     chunks = text_splitter.split_documents(documents)

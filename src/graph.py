@@ -5,6 +5,7 @@ import os
 from langgraph.graph import StateGraph, START, END 
 from langchain_openai import OpenAIEmbeddings 
 from groq import Groq
+from langchain_ollama import ChatOllama
 from langchain_pinecone import PineconeVectorStore
 
 client = Groq()
@@ -31,7 +32,7 @@ def build_rag_graph(index_name: str):
         pinecone_api_key=os.getenv("PINECONE_API_KEY"),
     )
 
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
     # llm = ChatOpenAI(model="stealth/space-bunny-alpha", temperature=0.4, base_url='https://openrouter.ai/api/v1')
     
 
@@ -41,30 +42,82 @@ def build_rag_graph(index_name: str):
     #     context_texts = [d.page_content for d in docs]
     #     return {"context": context_texts}
 
+    # def retrieve_node(state: AgentState):
+    #     docs_with_scores = vectorstore.similarity_search_with_score(
+    #         state["question"],
+    #         k=4
+    #     )
+
+    #     context_texts = []
+    #     scores = []
+
+    #     for doc, score in docs_with_scores:
+    #         context_texts.append(doc.page_content)
+    #         scores.append(score)
+
+    #         print("Score:", score)
+    #         print("Content:", doc.page_content[:200])
+    #         print("---")
+
+    #     # Highest/average score depends on your Pinecone metric.
+    #     avg_score = sum(scores) / len(scores) if scores else 0.0
+
+    #     return {
+    #         "context": context_texts,
+    #         "score": avg_score,
+    #     }
+    # 
+    
     def retrieve_node(state: AgentState):
+        question = state["question"]
+
+        # Retrieve the top 10 candidates from Pinecone
         docs_with_scores = vectorstore.similarity_search_with_score(
-            state["question"],
-            k=5
+            question,
+            k=10,
         )
 
-        context_texts = []
+        # Higher cosine similarity = more relevant
+        ranked_docs = sorted(
+            docs_with_scores,
+            key=lambda item: float(item[1]),
+            reverse=True,
+        )
+
+        # Remove duplicate chunks while preserving relevance order
+        unique_docs = []
+        seen_content = set()
+
+        for doc, score in ranked_docs:
+            normalized_content = " ".join(doc.page_content.split()).casefold()
+
+            if normalized_content in seen_content:
+                continue
+
+            seen_content.add(normalized_content)
+            unique_docs.append((doc, float(score)))
+
+            if len(unique_docs) == 4:
+                break
+
+        context = []
         scores = []
 
-        for doc, score in docs_with_scores:
-            context_texts.append(doc.page_content)
+        for rank, (doc, score) in enumerate(unique_docs, start=1):
+            context.append(doc.page_content)
             scores.append(score)
 
-            print("Score:", score)
-            print("Content:", doc.page_content[:200])
-            print("---")
-
-        # Highest/average score depends on your Pinecone metric.
-        avg_score = sum(scores) / len(scores) if scores else 0.0
+            print(f"\nRank: {rank}")
+            print(f"Cosine Similarity: {score:.4f}")
+            print(f"Content: {doc.page_content[:300]}")
+            print(f"Metadata: {doc.metadata}")
+            print("-" * 60)
 
         return {
-            "context": context_texts,
-            "score": avg_score,
+            "context": context,
+            "score": max(scores) if scores else 0.0,
         }
+
 
     def generate_node(state: AgentState):
         context_str = "\n\n".join(state["context"])
