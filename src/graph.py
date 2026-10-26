@@ -5,7 +5,6 @@ import os
 from langgraph.graph import StateGraph, START, END 
 from langchain_openai import OpenAIEmbeddings 
 from groq import Groq
-from langchain_ollama import ChatOllama
 from langchain_pinecone import PineconeVectorStore
 
 client = Groq()
